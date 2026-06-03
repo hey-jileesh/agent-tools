@@ -1,0 +1,10 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Runtime artifacts from the Bitbucket sweep (clones + resumable state)
+.agent-enablement-work/
