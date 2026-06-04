@@ -53,6 +53,36 @@ python3 repo-activity-analysis/scripts/analyze_activity.py /path/to/repo
 python3 sca-documentation/scripts/generate_sca.py /path/to/repo
 ```
 
+## Prompts
+
+Paste one of these to a coding agent working in your project to install and verify the
+skills. Adjust the repo URL/path if you've cloned it elsewhere.
+
+**Install (all skills, auto-detect agent):**
+> Clone `https://github.com/hey-jileesh/agent-tools` into a temp folder, then run its
+> `install.sh` to add all skills to this project. Use `--agent claude` for Claude Code,
+> `--agent devin` for Devin, or the default (`.agent/skills`) for Windsurf/Copilot.
+> Set `--target` to this project's root. Then show me what was installed.
+
+**Install a subset:**
+> Using the agent-tools `install.sh`, install only the `architecture-analysis` and
+> `repo-activity-analysis` skills into this project, then list the result.
+
+**Validate the install:**
+> Validate the agent-tools installation in this project: confirm every folder under the
+> skills directory (`.agent/skills`, `.claude/skills`, or `.cognition/skills`) contains a
+> `SKILL.md`; compare the installed set against `./install.sh --list`; and smoke-test the
+> script-based skills by running
+> `repo-activity-analysis/scripts/analyze_activity.py .` and
+> `sca-documentation/scripts/generate_sca.py .` against this repo. Report any skill that
+> is missing, has no `SKILL.md`, or whose script errors.
+
+**Install then validate, in one go:**
+> Install all the agent-tools skills into this project for Claude Code, re-running the
+> installer to sync if they already exist, then validate that each installed skill has a
+> `SKILL.md` and that the two script-based skills run without error. Summarize pass/fail
+> per skill.
+
 ## License
 
 [Apache-2.0](LICENSE) — free to use, modify, and distribute, including commercially.
