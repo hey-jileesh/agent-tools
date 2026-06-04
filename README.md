@@ -85,4 +85,6 @@ skills. Adjust the repo URL/path if you've cloned it elsewhere.
 
 ## License
 
-[Apache-2.0](LICENSE) — free to use, modify, and distribute, including commercially.
+[PolyForm Shield 1.0.0](LICENSE) — free to use and modify, including inside your own
+commercial software. You may **not** repackage or redistribute it as a product that
+competes with it. Source-available, not OSI open-source.
