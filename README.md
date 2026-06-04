@@ -14,7 +14,7 @@ a human — runs by reading its `SKILL.md` and following it.
 | [`project-summary-generator`](project-summary-generator/SKILL.md) | Writes **`PROJECT_SUMMARY.md`** — an annotated key-file index with version-pinned dependencies. |
 | [`sca-documentation`](sca-documentation/SKILL.md) | Software composition analysis: runs the dependency-tree command (Maven / npm / pip) and renders a searchable **`SCA.html`** tree that flags version conflicts. |
 | [`repo-activity-analysis`](repo-activity-analysis/SKILL.md) | Contribution-health scorecard from pure git history — liveness, velocity, trajectory, bus factor, churn, cadence — as **`REPO_ACTIVITY.html`** + JSON. |
-| [`agent-enablement`](agent-enablement/SKILL.md) | Composite: runs the four documentation skills above on a single repo. |
+| [`agent-enablement`](agent-enablement/SKILL.md) | Composite: runs the five per-repo skills above on a single repo (all by default; choose a subset via `AGENT_ENABLEMENT_SKILLS`). |
 | [`bitbucket-project-enablement`](bitbucket-project-enablement/SKILL.md) | Walks every repo in a Bitbucket Data Center project and runs `agent-enablement` on each, on a `feature/agent-enablement` branch (resumable). |
 
 ## Install

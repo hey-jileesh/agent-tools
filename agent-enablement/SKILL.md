@@ -1,79 +1,84 @@
 ---
 name: agent-enablement
-description: "Make a single repository 'agent-ready' by generating its full set of agent-enablement documents in one pass. Composite tool: runs architecture-analysis, agent-md-generator, and project-summary-generator on one checked-out repo to produce architecture.md, AGENT.md, and PROJECT_SUMMARY.md. Actions: detect the stack once, then create/update all three docs at the repo root in dependency order. Domains: ReactJS, Angular, Java Spring Boot, Python, codebase onboarding, agent readiness. Triggers: 'make this repo agent-ready', 'agent-enable this project', 'generate all the agent docs for this codebase', 'create architecture.md, AGENT.md and PROJECT_SUMMARY.md for this repo', 'onboard an agent to this repository'. Use this whenever someone wants the complete agent-enablement doc set for one repo (not a whole Bitbucket project — for that, use bitbucket-project-enablement, which calls this per repo)."
+description: "Make a single repository 'agent-ready' in one pass by running the per-repo skills on it. Composite tool: by default runs all five — architecture-analysis, agent-md-generator, project-summary-generator, sca-documentation, and repo-activity-analysis — on one checked-out repo to produce architecture.md, AGENT.md, PROJECT_SUMMARY.md, SCA.html, and REPO_ACTIVITY.html. A subset can be selected. Actions: detect/analyze the repo once and create or update the chosen enablement artifacts at the repo root. Domains: ReactJS, Angular, Java Spring Boot, Python, codebase onboarding, agent readiness, dependency analysis, repo health. Triggers: 'make this repo agent-ready', 'agent-enable this project', 'generate the agent docs for this codebase', 'onboard an agent to this repository', 'run all the repo skills on this project'. Use whenever someone wants the full (or a chosen subset of the) agent-enablement artifacts for one repo — for a whole Bitbucket project use bitbucket-project-enablement, which calls this per repo."
 ---
 
 # Agent Enablement (single repo)
 
 This is a **composite tool**. It makes one already-checked-out repository agent-ready
-by producing its complete set of enablement documents, by delegating to the leaf
-tools. It does not touch git or Bitbucket — give it a path to a working tree and it
-fills in the docs. (To do this across every repo in a Bitbucket project, use
+by running the per-repo skills on it and delegating to each leaf tool. It does not
+touch git or Bitbucket — give it a path to a working tree and it fills in the
+artifacts. (To do this across every repo in a Bitbucket project, use
 `bitbucket-project-enablement`, which clones/branches each repo and calls this tool.)
 
-## What it produces
+## The five skills it runs (all by default)
 
-At the repo root:
-
-- `architecture.md` — design overview with Mermaid C4 / component / ER / sequence diagrams
-- `AGENT.md` — build/test/run commands, conventions, project layout
-- `PROJECT_SUMMARY.md` — annotated file index, dependencies, patterns (clojure-mcp style)
-- `SCA.html` — searchable software-composition (dependency-tree) report
+| Skill | Output | Run via |
+|-------|--------|---------|
+| `architecture-analysis` | `architecture.md` (Mermaid C4/component/ER/sequence) | `../architecture-analysis/SKILL.md` |
+| `agent-md-generator` | `AGENT.md` (build/test/run commands, conventions) | `../agent-md-generator/SKILL.md` |
+| `project-summary-generator` | `PROJECT_SUMMARY.md` (annotated index, pinned deps) | `../project-summary-generator/SKILL.md` |
+| `sca-documentation` | `SCA.html` (searchable dependency tree + conflicts) | `../sca-documentation/SKILL.md` |
+| `repo-activity-analysis` | `REPO_ACTIVITY.html` (contribution-health scorecard) | `../repo-activity-analysis/SKILL.md` |
 
 ## Inputs
 
-- `<repo-path>` — path to the checked-out repository to document.
+- `<repo-path>` — path to the checked-out repository.
+- **Skill selection (optional)** — by default **run all five**. To run a subset,
+  either:
+  - the caller names the skills to run (e.g. "agent-enable this repo with just
+    architecture-analysis and sca-documentation"), or
+  - set `AGENT_ENABLEMENT_SKILLS` to a space/comma-separated list of skill names from
+    the table above (unset or empty = all). This makes selection machine-driveable
+    from CI or the Bitbucket sweep.
 
-`python3` (3.8+) and `git` should be available; the leaf tools' detectors are
+  Run exactly the selected skills and skip the rest.
+
+`python3` (3.8+) and `git` should be available; the leaf tools' scripts are
 standard-library Python (no install).
 
 ## Workflow
 
-Generate the documents **in this order** — the markdown docs build on the analysis the
-earlier ones surface. For each, **read and follow** the referenced leaf tool's
-`SKILL.md` (these are instructions to follow, not auto-loading skills), writing its
-output into `<repo-path>`:
+Determine the skill set first: if `AGENT_ENABLEMENT_SKILLS` is set (or the caller
+named a subset), use that; otherwise use all five. Then run the selected skills **in
+the order below**, writing each output into `<repo-path>`. For each, **read and
+follow** the referenced leaf tool's `SKILL.md` (these are instructions to follow, not
+auto-loading skills):
 
-1. **`architecture.md`** — read and follow `../architecture-analysis/SKILL.md`.
-   It runs `architecture-analysis/scripts/detect_stack.py <repo-path>` to detect the
-   stack (ReactJS / Angular / Java Spring Boot / Python) and map structure, then
-   writes `architecture.md` from its template with Mermaid diagrams.
-2. **`AGENT.md`** — read and follow `../agent-md-generator/SKILL.md`.
-   It runs `agent-md-generator/scripts/detect_commands.py <repo-path>` to pull the
-   repo's real build/test/run/lint commands, then writes `AGENT.md`.
-3. **`PROJECT_SUMMARY.md`** — read and follow `../project-summary-generator/SKILL.md`.
-   It runs `project-summary-generator/scripts/scan_inventory.py <repo-path>` for
-   dependencies-with-versions and the key-file inventory, then writes
-   `PROJECT_SUMMARY.md`.
-4. **`SCA.html`** — read and follow `../sca-documentation/SKILL.md`.
-   It runs `sca-documentation/scripts/generate_sca.py <repo-path>`, which runs the
-   ecosystem's dependency-tree command (Maven / npm / pip) and renders a searchable
-   HTML tree. Skip this only if the repo has no resolvable dependency manifest.
+1. **`architecture-analysis` → `architecture.md`** — detects the stack and maps
+   structure, then writes the doc with Mermaid diagrams.
+2. **`agent-md-generator` → `AGENT.md`** — pulls the repo's real build/test/run/lint
+   commands, then writes the doc.
+3. **`project-summary-generator` → `PROJECT_SUMMARY.md`** — gathers dependencies (with
+   versions) and the key-file inventory, then writes the index.
+4. **`sca-documentation` → `SCA.html`** — runs the dependency-tree command
+   (Maven / npm / pip) and renders the searchable tree. Skip if the repo has no
+   resolvable dependency manifest.
+5. **`repo-activity-analysis` → `REPO_ACTIVITY.html`** — computes the contribution-
+   health scorecard from git history.
 
-The three markdown docs **create or update** their file: if the doc already exists,
-the human prose and notes are preserved and the generated sections refreshed. `SCA.html`
-is regenerated each run (it's a snapshot of the resolved dependency tree).
+Order matters only among the three markdown docs (1→3), which build on the analysis
+earlier ones surface; `SCA.html` and `REPO_ACTIVITY.html` are independent and may run
+in any order. The markdown docs **create or update** their file (human prose and notes
+preserved, generated sections refreshed); the two HTML reports are regenerated each
+run (snapshots).
 
 If the stack comes back `unknown`, still produce best-effort docs from a manual read
-and flag the uncertainty in each document.
+and flag the uncertainty.
 
 ## Why a separate composite
 
-Keeping "enable one repo" as its own tool means:
-
-- You can run the **full doc set on a single repo** without any Bitbucket machinery.
-- The higher-level `bitbucket-project-enablement` orchestrator stays thin — it only
-  handles walking the project and git, and calls this tool per repo.
-- It is the **extension point**: to add a new enablement document, add it as a leaf
-  tool and reference it here in one place; every caller (including the Bitbucket sweep)
-  picks it up automatically. `sca-documentation` (the `SCA.html` step) was added
-  exactly this way — a leaf tool plus one line here.
+- You can run the **full set (or a chosen subset) on a single repo** without any
+  Bitbucket machinery.
+- The higher-level `bitbucket-project-enablement` orchestrator stays thin — it handles
+  walking the project and git, and calls this tool per repo (it commits whichever
+  artifacts were produced, so subset selection flows through automatically).
+- It is the **extension point**: to add a new per-repo skill, add it as a leaf tool,
+  add a row to the table above and a step to the workflow — every caller picks it up.
+  `sca-documentation` and `repo-activity-analysis` were both added this way.
 
 ## Reference
 
-- `../architecture-analysis/SKILL.md` — produces `architecture.md`.
-- `../agent-md-generator/SKILL.md` — produces `AGENT.md`.
-- `../project-summary-generator/SKILL.md` — produces `PROJECT_SUMMARY.md`.
-- `../sca-documentation/SKILL.md` — produces `SCA.html`.
-- `../bitbucket-project-enablement/SKILL.md` — the higher-level tool that runs this
-  across every repo in a Bitbucket project.
+- The five leaf tools listed in the table above.
+- `../bitbucket-project-enablement/SKILL.md` — runs this across every repo in a
+  Bitbucket project.

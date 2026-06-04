@@ -105,10 +105,12 @@ an existing branch is reused. Empty repos are auto-marked `skipped` (`"empty": t
 — loop back to 3a.
 
 **3c. Make the repo agent-ready (your work):** run the **`agent-enablement`** composite
-on the repo's `path` — **read and follow `../agent-enablement/SKILL.md`**. It produces
-all three docs (`architecture.md`, `AGENT.md`, `PROJECT_SUMMARY.md`) at the repo root,
-in dependency order, by delegating to the leaf tools. (These are instructions to
-follow, not auto-loading skills.)
+on the repo's `path` — **read and follow `../agent-enablement/SKILL.md`**. By default it
+produces all five artifacts (`architecture.md`, `AGENT.md`, `PROJECT_SUMMARY.md`,
+`SCA.html`, `REPO_ACTIVITY.html`) at the repo root by delegating to the leaf tools. To
+run only some, set `AGENT_ENABLEMENT_SKILLS` (space/comma list of skill names) before
+the sweep, or tell the composite which to run. (These are instructions to follow, not
+auto-loading skills.)
 
 Optionally checkpoint with `python3 scripts/enable_project.py set-status <slug> documented`.
 
@@ -118,9 +120,10 @@ Optionally checkpoint with `python3 scripts/enable_project.py set-status <slug> 
 python3 scripts/enable_project.py finalize <slug>
 ```
 
-Stages the three docs, commits them, pushes `feature/agent-enablement` to `origin`,
-and records `status: pushed` (or `failed` with the error). Reports `committed: false`
-if docs were unchanged (still marked done). Loop back to 3a.
+Stages whichever enablement artifacts exist, commits them, pushes
+`feature/agent-enablement` to `origin`, and records `status: pushed` (or `failed` with
+the error). Reports `committed: false` if nothing changed (still marked done). Loop
+back to 3a.
 
 ### Step 4 — Report
 
