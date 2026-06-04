@@ -47,8 +47,9 @@ or you can't see it.
 | Parent / Epic | `fields.parent` |
 | Comments | `fields.comment.comments[]` (author, created, body) |
 
-## Optional extensions (not implemented)
+## Scope
 
-- **Watchers:** `GET /rest/api/{v}/issue/{KEY}/watchers` (separate call).
-- **Epic children / roll-up:** `GET /rest/api/{v}/search?jql=parent=KEY` (or the
-  Epic Link field on older Jira) to list and aggregate child issues.
+- Each issue is read on its own — including epics. Child stories/tasks of an epic are
+  **out of scope** by design (no roll-up).
+- **Watchers** are an optional separate call (`GET /rest/api/{v}/issue/{KEY}/watchers`)
+  and are not fetched.

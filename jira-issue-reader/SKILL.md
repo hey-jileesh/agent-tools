@@ -57,9 +57,9 @@ with the most significant (status, scope/description, fix version, assignee).
   field whose name matches "Acceptance Criteria", and falls back to an
   "Acceptance Criteria" heading inside the description. If neither exists it returns
   null — say so rather than inventing criteria.
-- **Epics:** the issue's own changelog covers "what changed" for an epic. Listing an
-  epic's child issues (and their changes) needs a JQL search — a natural extension if
-  you need roll-up scope.
+- **Epics** are read like any other issue — its own fields and changelog. Child
+  stories/tasks are intentionally **out of scope**: "what changed" for an epic means
+  changes to the epic itself, not a roll-up of its children.
 - **Descriptions** in Jira Cloud are ADF (rich JSON); the tool flattens them to text.
 
 ## Security
