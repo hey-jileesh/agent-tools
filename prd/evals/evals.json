@@ -1,0 +1,19 @@
+{
+  "skill_name": "prd",
+  "evals": [
+    {
+      "id": 1,
+      "name": "invoice-search",
+      "prompt": "We keep getting support tickets from customers saying they can't find their old invoices in our billing portal. Our support lead suggested we 'add a search bar to the billing page.' Can you write a PRD for this?",
+      "expected_output": "A business-level PRD that does NOT just spec a search bar. It should treat the search-bar request as a symptom, diagnose the real problem (customers can't locate past invoices / unmet objective), produce a problem statement, use cases, and a decision matrix contrasting approaches (status quo vs search vs other ways to surface invoices). No code, framework, or physical schema; data/entities only at a conceptual level. Asks or states assumptions about who the users are and the current portal behaviour.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "monday-reconcile",
+      "prompt": "Every Monday our operations team spends 3-4 hours manually reconciling shipment data across three carrier spreadsheets, and errors still slip through. Leadership wants us to 'build a reconciliation dashboard.' Write a PRD.",
+      "expected_output": "A business-level PRD that diagnoses the underlying problem (manual, error-prone cross-source reconciliation) rather than assuming a dashboard. Includes a problem statement, use cases, a decision matrix of approaches (status quo, dashboard, automated reconciliation/matching, etc.), and a conceptual data/domain model for the shipment/carrier data and what 'reconciled' means (data semantics). Stays out of code/architecture; records technical questions as engineering handoffs.",
+      "files": []
+    }
+  ]
+}

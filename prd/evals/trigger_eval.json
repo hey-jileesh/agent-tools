@@ -1,0 +1,18 @@
+[
+  {"query": "ok so leadership wants us to let customers export their billing history to csv. can you help me turn this into a proper requirements doc before we hand it to eng?", "should_trigger": true},
+  {"query": "we keep arguing about what 'done' means for the new onboarding flow. i need a PRD that nails the actual problem and the scope.", "should_trigger": true},
+  {"query": "turn JIRA-4821 (it's an epic about self-serve refunds) into a product requirements document", "should_trigger": true},
+  {"query": "before we build anything, help me figure out what problem we're actually solving with this 'notifications center' idea and write it up", "should_trigger": true},
+  {"query": "write up the business requirements for a feature that lets account managers bulk-reassign clients", "should_trigger": true},
+  {"query": "i have a vague feature request from sales — 'we need better reporting' — help me spec it out properly with use cases and tradeoffs", "should_trigger": true},
+  {"query": "draft a PRD for our Q3 epic on multi-currency invoicing, kept at the business level", "should_trigger": true},
+  {"query": "can you do a requirement analysis for the new vendor-onboarding workflow and lay out the options?", "should_trigger": true},
+  {"query": "read JIRA-4821 and tell me who's assigned and what changed since last sprint", "should_trigger": false},
+  {"query": "write the React component and the API endpoint for the billing search bar", "should_trigger": false},
+  {"query": "generate an architecture.md with diagrams for this Spring Boot service", "should_trigger": false},
+  {"query": "create a PROJECT_SUMMARY for our payments repo so a new dev can navigate it", "should_trigger": false},
+  {"query": "is our payments repo still actively maintained? give me a contribution-health report", "should_trigger": false},
+  {"query": "just summarize the acceptance criteria currently on PROJ-100 for me", "should_trigger": false},
+  {"query": "review this pull request for the refunds feature and flag any issues", "should_trigger": false},
+  {"query": "roughly how many sprints will the multi-currency invoicing work take?", "should_trigger": false}
+]
