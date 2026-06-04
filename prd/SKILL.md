@@ -1,6 +1,6 @@
 ---
 name: prd
-description: "Interactive requirement analyst that creates Product Requirement Documents (PRDs) using Rich Hickey's 'Design in Practice' methodology — Socratic questioning, decision matrices, and phased design thinking that move from a vague idea to a precise, problem-focused PRD. Actions: capture the situation, diagnose the real problem behind a feature request, state a precise problem statement, enumerate use cases, weigh approaches with decision matrices, then compile a PRD document. Domains: product requirements, PRD, requirement analysis, problem framing, product/feature planning, design tradeoffs, scoping. Triggers: 'write a PRD', 'create a product requirements doc', 'help me spec this feature', 'turn this idea into requirements', 'what problem are we actually solving', 'requirement analysis', 'feature spec', 'scope this work'. Stays at the business problem/solution level for business, systems, and domain analysts — covering data, entities, and conceptual/logical data models when relevant, but not code, architecture, APIs, or physical schema. Use whenever someone wants to define, scope, or write up product/feature requirements, or move from a fuzzy idea or feature request to a rigorous, problem-focused specification."
+description: "Interactive requirement analyst that creates Product Requirement Documents (PRDs) using Rich Hickey's 'Design in Practice' methodology — Socratic questioning, decision matrices, and phased design thinking that move from a vague idea to a precise, problem-focused PRD. Actions: capture the situation, diagnose the real problem behind a feature request, state a precise problem statement, enumerate use cases, weigh approaches with decision matrices, then compile a PRD document. Domains: product requirements, PRD, requirement analysis, problem framing, product/feature planning, design tradeoffs, scoping. Triggers: 'write a PRD', 'create a product requirements doc', 'help me spec this feature', 'turn this idea into requirements', 'write a PRD for this epic/story', 'turn JIRA-123 into a PRD', 'what problem are we actually solving', 'requirement analysis', 'feature spec', 'scope this work'. Input can be a Jira epic/story/task key (read via the jira-issue-reader skill) or context the user provides directly. Stays at the business problem/solution level for business, systems, and domain analysts — covering data, entities, and conceptual/logical data models when relevant, but not code, architecture, APIs, or physical schema. Use whenever someone wants to define, scope, or write up product/feature requirements, or move from a fuzzy idea or feature request to a rigorous, problem-focused specification."
 allowed-tools: Read, Grep, Glob, AskUserQuestion, Write, Edit, WebSearch, WebFetch
 ---
 
@@ -40,6 +40,27 @@ tuning. Describe data by **what it means to the business**, not how it is stored
 When the conversation drifts into "how do we build it technically," steer back: name
 the business objective and the rule or behavior, and record any genuinely technical
 question under Open Questions for the engineering team — don't decide it in the PRD.
+
+## Inputs — where the starting material comes from
+
+The PRD can start from either source (or both):
+
+1. **A Jira issue** — an epic, story, task, or bug key such as `PROJ-123`. Read it first
+   with the **`jira-issue-reader`** skill — read and follow `../jira-issue-reader/SKILL.md`
+   (e.g. `python3 ../jira-issue-reader/scripts/read_issue.py <KEY>`). Use the issue's
+   title, description, acceptance criteria, comments, and people as **raw situation** for
+   Phase 1 (Describe) — capture them as "the story says X", never as the problem itself.
+   The stated feature and acceptance criteria are requests to diagnose in Phase 2, not a
+   finished problem statement. For an epic, use its description as the high-level
+   objective (the reader does not expand child stories — out of scope).
+
+2. **Material the user provides directly** — a paragraph, notes, a feature request, a
+   meeting summary, or answers to your questions.
+
+Either way the methodology is unchanged: never accept the input's stated feature or
+acceptance criteria as the problem — diagnose across to the real problem. You can
+combine sources (a Jira story plus extra context the user adds), and you should
+reconcile contradictions between them out loud.
 
 ## Process: Design Phases
 
@@ -247,6 +268,16 @@ When invoked, begin with:
 
 > Let's build a rigorous PRD together. I'll guide us through Rich Hickey's design phases — from understanding the situation, to diagnosing the real problem, to evaluating approaches with decision matrices.
 >
-> **Where are we starting?** Tell me about what you're thinking about building or solving. I want to hear the situation — what you're observing, what users are saying, what feels wrong or missing. Don't worry about solutions yet.
+> **Where are we starting?** Give me a Jira issue key (epic, story, or task — I'll read
+> it) or just describe the situation: what you're observing, what users are saying, what
+> feels wrong or missing. Don't worry about solutions yet.
 
-If the user provides arguments (`$ARGUMENTS`), use those as the starting context and begin with Phase 1 (Describe), asking clarifying questions about the situation.
+If the user provides arguments (`$ARGUMENTS`) or a starting context:
+- If it looks like a **Jira issue key** (e.g. `PROJ-123`), first read that issue with
+  the `jira-issue-reader` skill and use its content as the starting situation; briefly
+  reflect back what you found (type, summary, stated request, acceptance criteria, who's
+  involved) before proceeding.
+- Otherwise use the provided text as the starting context.
+
+Either way, begin with **Phase 1 (Describe)** — capture the situation as reported and
+ask clarifying questions, without yet declaring the problem.
