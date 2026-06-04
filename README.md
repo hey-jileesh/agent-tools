@@ -21,6 +21,9 @@ graph TD
         psg["project-summary-generator\n→ PROJECT_SUMMARY.md"]
         sca["sca-documentation\n→ SCA.html"]
     end
+    subgraph standalone["Standalone analysis"]
+        raa["repo-activity-analysis\n→ REPO_ACTIVITY.html"]
+    end
     bpe --> ae
     ae --> aa
     ae --> amg
@@ -29,9 +32,11 @@ graph TD
 ```
 
 - **Leaf tools** do one thing and can run on any repo on their own.
-- **Composite** tools combine leaf tools (`agent-enablement` = all three on one repo).
+- **Composite** tools combine leaf tools (`agent-enablement` = the leaf doc tools on one repo).
 - **Higher-level** tools add orchestration (`bitbucket-project-enablement` = walk a
   project + run `agent-enablement` per repo + git + resumable state).
+- **Standalone analysis** tools assess a repo rather than document it
+  (`repo-activity-analysis`), so they're used on their own, not part of the enablement set.
 
 ## Tools
 
@@ -43,10 +48,12 @@ graph TD
 | [`sca-documentation`](sca-documentation/SKILL.md) | leaf | `SCA.html` — searchable, collapsible dependency tree + version-conflict flags | yes | `scripts/generate_sca.py` |
 | [`agent-enablement`](agent-enablement/SKILL.md) | composite | all of the above on one checked-out repo | yes (one repo) | — |
 | [`bitbucket-project-enablement`](bitbucket-project-enablement/SKILL.md) | higher-level | walks a Bitbucket DC project, runs `agent-enablement` per repo, pushes `feature/agent-enablement` | yes (whole project) | `scripts/enable_project.py` |
+| [`repo-activity-analysis`](repo-activity-analysis/SKILL.md) | standalone | `REPO_ACTIVITY.html` + JSON — contribution-health scorecard (liveness, velocity, trajectory, bus factor, churn, cadence) from pure git history | yes | `scripts/analyze_activity.py` |
 
 Each leaf tool ships its **own** detector, specialized to what its document needs
 (structure / commands / inventory) — so the tools stay independent and there's no
-shared dependency between peers.
+shared dependency between peers. `repo-activity-analysis` is a standalone *assessment*
+(not part of the enablement doc set), and works on any git clone regardless of host.
 
 ## Conventions
 
@@ -75,6 +82,8 @@ python3 agent-md-generator/scripts/detect_commands.py /path/to/repo
 python3 project-summary-generator/scripts/scan_inventory.py /path/to/repo
 # Dependency-tree SCA report (Java/Maven, Node, or Python)
 python3 sca-documentation/scripts/generate_sca.py /path/to/repo   # writes <repo>/SCA.html
+# Contribution-health report (any git clone, any host)
+python3 repo-activity-analysis/scripts/analyze_activity.py /path/to/repo  # writes <repo>/REPO_ACTIVITY.html
 ```
 
 The architecture/agent/summary detectors handle **ReactJS, Angular, Java Spring Boot,
