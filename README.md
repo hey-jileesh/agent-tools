@@ -55,6 +55,35 @@ Each leaf tool ships its **own** detector, specialized to what its document need
 shared dependency between peers. `repo-activity-analysis` is a standalone *assessment*
 (not part of the enablement doc set), and works on any git clone regardless of host.
 
+## Install into a project
+
+Each coding agent discovers skills in a different directory. The installer copies
+(syncs) the chosen skills into the right one:
+
+| Agent | Skills directory |
+|-------|------------------|
+| Windsurf / GitHub Copilot | `.agent/skills` (default) |
+| Claude Code / Cowork | `.claude/skills` |
+| Devin | `.cognition/skills` |
+
+```bash
+# macOS / Linux — from the agent-tools repo
+./install.sh --target ~/projects/target-project            # all skills -> .agent/skills
+./install.sh --target ~/projects/target-project --agent claude
+./install.sh --target ~/projects/target-project --agent devin --skills "architecture-analysis repo-activity-analysis"
+./install.sh --list                                        # show available skills
+```
+
+```bat
+REM Windows
+install.cmd --target C:\path\to\target-project --agent claude
+```
+
+Run with no flags for an interactive picker (agent + skills). Defaults: **all skills**,
+**`.agent/skills`**. Re-running **syncs** — existing skills are mirrored (updated, with
+removed files pruned), so install doubles as update. The analysis tools also run
+without installing — see "Using a tool independently" below.
+
 ## Conventions
 
 Every tool is a top-level folder with:
