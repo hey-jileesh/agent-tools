@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformation Spec Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --ink: #1a2233; --muted: #6b7486;
+    --line: #e3e6ec; --accent: #2f5fd0;
+    --t-direct: #4a6fa5; --t-expression: #7c4dbe; --t-conditional: #c07c1f;
+    --t-aggregate: #c0392b; --t-lookup: #148f8f; --t-constant: #5d6672; --t-system: #2e8b57;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); padding: 24px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab { padding: 7px 14px; border: 1px solid var(--line); border-radius: 20px; background: var(--card); cursor: pointer; font-size: 13px; }
+  .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .paste-area { display: none; margin-bottom: 18px; }
+  .paste-area textarea { width: 100%; height: 160px; font-family: ui-monospace, monospace; font-size: 12px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .paste-area button { margin-top: 8px; padding: 8px 16px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+  .err { color: #c0392b; font-size: 13px; margin-top: 6px; }
+
+  .header-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .header-card .target { font-size: 18px; font-weight: 700; font-family: ui-monospace, monospace; }
+  .header-card .desc { color: var(--muted); font-size: 13.5px; margin-top: 6px; max-width: 720px; }
+  .chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 4px 10px; border-radius: 12px; background: #eef1f6; color: #3a4356; }
+  .chip b { font-weight: 600; }
+  .chip.grain { background: #e8f0ff; color: #23479e; }
+
+  .flow { display: grid; grid-template-columns: 240px 40px 1fr; gap: 0; align-items: start; }
+  .col-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+  .src-card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; transition: box-shadow .15s, border-color .15s; }
+  .src-card.lit { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(47,95,208,.25); }
+  .src-card .alias { font-size: 11px; color: var(--muted); }
+  .src-card .tbl { font-family: ui-monospace, monospace; font-size: 12.5px; font-weight: 600; }
+  .pipe-note { background: var(--card); border: 1px dashed var(--line); border-radius: 8px; padding: 8px 12px; margin-bottom: 8px; font-size: 12px; color: var(--muted); }
+  .pipe-note b { color: var(--ink); font-weight: 600; }
+  .arrow { display: flex; align-items: center; justify-content: center; padding-top: 40px; color: var(--muted); font-size: 22px; }
+
+  table.cols { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  table.cols th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); background: #fafbfd; }
+  table.cols td { padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: top; }
+  table.cols tr:last-child td { border-bottom: none; }
+  table.cols tr:hover td { background: #f5f8ff; cursor: default; }
+  .colname { font-family: ui-monospace, monospace; font-weight: 600; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; color: #fff; }
+  .from { font-family: ui-monospace, monospace; font-size: 12px; color: #3a4356; }
+  .rule { font-size: 12.5px; color: #3a4356; }
+  .rule code { font-family: ui-monospace, monospace; font-size: 11.5px; background: #f0f2f6; padding: 2px 5px; border-radius: 4px; }
+  .map { display: flex; flex-direction: column; gap: 2px; }
+  .map span { font-size: 12px; }
+  .map .arr { color: var(--muted); padding: 0 4px; }
+  .tests-cell { font-size: 11.5px; color: var(--muted); }
+  .section { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  .section h3 { font-size: 13px; margin-bottom: 8px; }
+  .section ul { margin-left: 18px; font-size: 12.5px; color: #3a4356; }
+  .section li { margin-bottom: 4px; }
+  .notes { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; font-size: 11.5px; color: var(--muted); align-items: center; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 4px; vertical-align: -1px; }
+  @media (max-width: 800px) { .flow { grid-template-columns: 1fr; } .arrow { display: none; } }
+</style>
+</head>
+<body>
+
+<h1>Transformation Spec Viewer</h1>
+<div class="sub">How each field in the target table is built from its sources. Hover a row to highlight where the data comes from.</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="paste-area" id="pasteArea">
+  <textarea id="yamlIn" placeholder="Paste a transformation spec (YAML) here..."></textarea><br>
+  <button onclick="renderPasted()">Render</button>
+  <div class="err" id="pasteErr"></div>
+</div>
+
+<div id="view"></div>
+
+<script>
+const TYPE_META = {
+  direct:      { color: 'var(--t-direct)',      label: 'Copied',      explain: s => `Taken directly from <span class="from">${s}</span>` },
+  expression:  { color: 'var(--t-expression)',  label: 'Calculated',  explain: null },
+  conditional: { color: 'var(--t-conditional)', label: 'Conditional', explain: null },
+  aggregate:   { color: 'var(--t-aggregate)',   label: 'Rolled up',   explain: null },
+  lookup:      { color: 'var(--t-lookup)',      label: 'Looked up',   explain: null },
+  constant:    { color: 'var(--t-constant)',    label: 'Fixed value', explain: null },
+  system:      { color: 'var(--t-system)',      label: 'System',      explain: null },
+};
+
+const SPECS = {};
+
+// {{SPECS_START}}
+// {{SPECS_END}}
+
+let current = Object.keys(SPECS)[0] || 'Paste your own';
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function srcAliases(src) {
+  if (!src) return [];
+  const arr = Array.isArray(src) ? src : [src];
+  return arr.map(s => String(s).includes('.') ? String(s).split('.')[0] : null).filter(Boolean);
+}
+
+function renderRule(col) {
+  const t = col.type;
+  if (t === 'direct') return `Taken directly from <span class="from">${esc(col.source)}</span>` + (col.target_type ? ` <span class="tests-cell">(as ${esc(col.target_type)})</span>` : '');
+  if (t === 'constant') return `Always <code>${esc(col.rule)}</code>`;
+  if (t === 'system') return `Set automatically: <code>${esc(col.rule)}</code>`;
+  if (t === 'lookup') {
+    const l = col.lookup || {};
+    return `Look up <span class="from">${esc(col.source)}</span> in <span class="from">${esc(l.table||'')}</span> and return <span class="from">${esc(l.return||'')}</span>` + (col.default !== undefined ? ` <span class="tests-cell">(blank if not found)</span>` : '');
+  }
+  if (t === 'conditional') {
+    const parts = String(col.rule).split(';').map(p => p.trim()).filter(Boolean);
+    const rows = parts.map(p => {
+      if (p.toLowerCase().startsWith('else')) return `<span><i>anything else</i><span class="arr">→</span><b>${esc(p.slice(4).trim())}</b></span>`;
+      const [a, b] = p.split('->');
+      return `<span>${esc((a||'').trim())}<span class="arr">→</span><b>${esc((b||'').trim())}</b></span>`;
+    }).join('');
+    return `<div class="map">${rows}</div>`;
+  }
+  if (t === 'aggregate') {
+    const m = String(col.rule).match(/^(.*?)\s+GROUP BY\s+(.*?)(?:\s+WHERE\s+(.*))?$/i);
+    if (m) return `<b>${esc(m[1])}</b> per ${esc(m[2])}` + (m[3] ? `, only where ${esc(m[3])}` : '');
+    return `<code>${esc(col.rule)}</code>`;
+  }
+  return `<code>${esc(col.rule)}</code>`; // expression
+}
+
+function render(spec) {
+  const view = document.getElementById('view');
+  const sources = spec.sources || {};
+  const cols = spec.columns || {};
+  const load = spec.load || {};
+
+  const srcCards = Object.entries(sources).map(([a, t]) =>
+    `<div class="src-card" data-alias="${esc(a)}"><div class="alias">${esc(a)}</div><div class="tbl">${esc(t)}</div></div>`).join('');
+
+  const pipeNotes = [
+    spec.filter ? `<div class="pipe-note"><b>Filter:</b> ${esc(spec.filter)}</div>` : '',
+    (spec.join||[]).map(j => `<div class="pipe-note"><b>Join:</b> ${esc(j)}</div>`).join(''),
+    spec.dedupe ? `<div class="pipe-note"><b>Dedupe:</b> keep latest per ${esc((spec.dedupe.key||[]).join(', '))}</div>` : '',
+  ].join('');
+
+  const rows = Object.entries(cols).map(([name, c]) => {
+    const meta = TYPE_META[c.type] || { color: '#888', label: c.type };
+    const aliases = srcAliases(c.source).join(' ');
+    const tests = (c.tests||[]).map(t => typeof t === 'string' ? t : Object.keys(t)[0]).join(', ');
+    return `<tr data-aliases="${esc(aliases)}">
+      <td class="colname">${esc(name)}</td>
+      <td><span class="badge" style="background:${meta.color}">${meta.label}</span></td>
+      <td class="rule">${renderRule(c)}</td>
+      <td class="tests-cell">${esc(tests)}</td>
+    </tr>`;
+  }).join('');
+
+  const tblTests = (spec.tests||[]).map(t => {
+    if (typeof t === 'string') return `<li>${esc(t)}</li>`;
+    const k = Object.keys(t)[0], v = t[k];
+    if (k === 'unique_combination') return `<li>Each combination of <b>${esc(v.join(' + '))}</b> appears only once</li>`;
+    if (k === 'row_count') return `<li>Table must have ${v.min ? 'at least ' + v.min : ''}${v.max ? ' at most ' + v.max : ''} row(s)</li>`;
+    if (k === 'custom_sql') return `<li>Custom check (see spec)</li>`;
+    return `<li>${esc(k)}</li>`;
+  }).join('');
+
+  const legend = Object.entries(TYPE_META).map(([k, m]) =>
+    `<span><span class="dot" style="background:${m.color}"></span>${m.label}</span>`).join('');
+
+  view.innerHTML = `
+    <div class="header-card">
+      <div class="target">${esc(spec.target)}</div>
+      <div class="desc">${esc(spec.description||'')}</div>
+      <div class="chips">
+        <span class="chip"><b>Flow:</b> ${esc(spec.layer||'')}</span>
+        <span class="chip grain"><b>Grain:</b> ${esc(spec.grain||'')}</span>
+        <span class="chip"><b>Load:</b> ${esc(load.mode||'')}${load.merge_key ? ' on ' + esc(load.merge_key.join(', ')) : ''}</span>
+        ${spec.owner ? `<span class="chip"><b>Owner:</b> ${esc(spec.owner)}</span>` : ''}
+      </div>
+    </div>
+    <div class="legend">${legend}</div>
+    <div class="flow">
+      <div><div class="col-title">Sources</div>${srcCards}${pipeNotes}</div>
+      <div class="arrow">→</div>
+      <div>
+        <div class="col-title">Target columns (${Object.keys(cols).length})</div>
+        <table class="cols">
+          <thead><tr><th>Column</th><th>How</th><th>Logic</th><th>Checks</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+    ${tblTests ? `<div class="section"><h3>Quality checks on the whole table</h3><ul>${tblTests}</ul></div>` : ''}
+    ${spec.notes ? `<div class="section"><h3>Notes</h3><div class="notes">${esc(spec.notes)}</div></div>` : ''}
+  `;
+
+  view.querySelectorAll('tr[data-aliases]').forEach(tr => {
+    tr.addEventListener('mouseenter', () => {
+      const set = new Set(tr.dataset.aliases.split(' ').filter(Boolean));
+      view.querySelectorAll('.src-card').forEach(c => c.classList.toggle('lit', set.has(c.dataset.alias)));
+    });
+    tr.addEventListener('mouseleave', () => view.querySelectorAll('.src-card').forEach(c => c.classList.remove('lit')));
+  });
+}
+
+function renderPasted() {
+  const errEl = document.getElementById('pasteErr');
+  errEl.textContent = '';
+  try {
+    const spec = jsyaml.load(document.getElementById('yamlIn').value);
+    if (!spec || !spec.target || !spec.columns) throw new Error('Spec needs at least "target" and "columns".');
+    render(spec);
+  } catch (e) { errEl.textContent = 'Could not read spec: ' + e.message; }
+}
+
+function buildTabs() {
+  const tabs = document.getElementById('tabs');
+  const names = [...Object.keys(SPECS), 'Paste your own'];
+  tabs.innerHTML = names.map(n => `<div class="tab ${n===current?'active':''}" data-name="${esc(n)}">${esc(n)}</div>`).join('');
+  tabs.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    current = t.dataset.name;
+    buildTabs();
+    const paste = document.getElementById('pasteArea');
+    if (current === 'Paste your own') { paste.style.display = 'block'; document.getElementById('view').innerHTML = ''; }
+    else { paste.style.display = 'none'; render(jsyaml.load(SPECS[current])); }
+  }));
+}
+
+buildTabs();
+if (SPECS[current]) render(jsyaml.load(SPECS[current]));
+else document.getElementById('pasteArea').style.display = 'block';
+</script>
+</body>
+</html>

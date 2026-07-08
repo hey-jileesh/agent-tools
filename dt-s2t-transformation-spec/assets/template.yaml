@@ -1,0 +1,111 @@
+# =============================================================================
+# SOURCE-TO-TARGET TRANSFORMATION SPEC — TEMPLATE
+# One file per target table. Filename convention: <layer>.<target_table>.yaml
+# Expression language: ANSI SQL (never English prose in `rule`).
+# See SPEC_GUIDE.md for the full vocabulary and generation contract.
+# =============================================================================
+
+spec_version: "1.0"
+
+# ---- TARGET ----------------------------------------------------------------
+target: <layer>.<table>            # e.g. silver.membership
+description: >
+  One-sentence business purpose of this table.
+layer: <source_layer> -> <target_layer>   # bronze -> silver | silver -> gold
+grain: one row per <business key(s)>      # REQUIRED. Validates joins/aggregates.
+owner: <team or person>
+tags: []                                  # optional: domain, segment, etc.
+
+# ---- SOURCES ---------------------------------------------------------------
+# Every source gets a short alias. Reference columns as alias.column everywhere.
+sources:
+  <alias>: <layer>.<table>          # primary source first
+  <alias2>: <layer>.<table>
+
+# Joins are LEFT unless stated. Primary source is the join base.
+join:
+  - "<alias2> ON <alias>.<key> = <alias2>.<key>"          # left join (default)
+  - "INNER <alias3> ON <alias>.<key> = <alias3>.<key>"    # prefix to override
+
+# Row-level filter applied to the source set (SQL WHERE fragment). Optional.
+filter: "<alias>.<condition>"
+
+# Deduplication, if source can deliver duplicates. Optional.
+dedupe:
+  key: [<alias>.<col>]              # partition columns
+  order_by: "<alias>.<col> DESC"    # keep first row per key by this ordering
+
+# ---- LOAD STRATEGY ---------------------------------------------------------
+load:
+  mode: merge                       # merge | append | full_refresh | scd2
+  merge_key: [<col>]                # required for merge / scd2
+  # scd2 only:
+  # track_columns: [<col>, ...]     # changes here open a new version row
+  # effective_from: <col>
+
+# ---- COLUMN MAPPINGS -------------------------------------------------------
+# Every target column appears exactly once. `type` is a closed vocabulary:
+#   direct      copy as-is (casts allowed via target_type)
+#   expression  SQL scalar expression over one or more source columns
+#   conditional CASE logic; shorthand "in -> out; in -> out; else X"
+#   aggregate   aggregation over a source; rule states fn, GROUP BY, and filter
+#   lookup      value fetched from a reference table by key
+#   constant    hardcoded literal
+#   system      runtime-generated (timestamps, hashes, batch ids)
+#
+# Rules:
+# - `source` is REQUIRED for all types except constant/system (column lineage).
+# - Rules must be literal — no "same as above", no macros, no indirection.
+# - `default` states the value when source is NULL / lookup misses. Optional.
+
+columns:
+
+  <target_col>:
+    type: direct
+    source: <alias>.<col>
+    target_type: string             # optional cast
+    tests: [not_null, unique]       # optional; see tests vocabulary below
+
+  <target_col>:
+    type: expression
+    source: [<alias>.<col_a>, <alias>.<col_b>]
+    rule: "SQL_EXPRESSION(col_a, col_b)"
+
+  <target_col>:
+    type: conditional
+    source: <alias>.<col>
+    rule: "'A' -> 'Active'; 'T' -> 'Termed'; else 'Unknown'"
+
+  <target_col>:
+    type: aggregate
+    source: <layer>.<table>.<col>
+    rule: "SUM(<col>) GROUP BY <key> WHERE <condition>"
+
+  <target_col>:
+    type: lookup
+    source: <alias>.<key_col>
+    lookup: { table: <layer>.<ref_table>, key: <ref_key>, return: <ref_value> }
+    default: null
+
+  <target_col>:
+    type: constant
+    rule: "'<literal>'"
+
+  <target_col>:
+    type: system
+    rule: "current_timestamp()"     # or: batch_id | md5(concat(...)) etc.
+
+# ---- TABLE-LEVEL TESTS -----------------------------------------------------
+# Column tests: not_null | unique | accepted_values: [...] |
+#               relationships: {to: <layer>.<table>, field: <col>}
+# Table tests below run after load.
+tests:
+  - unique_combination: [<col_a>, <col_b>]        # must match `grain`
+  - row_count: { min: 1 }
+  # - custom_sql: "SELECT ... "     # must return 0 rows to pass
+
+# ---- NOTES -----------------------------------------------------------------
+# Free text for humans AND the agent: known data quirks, upstream caveats,
+# decisions and their rationale. The agent must read but never invent these.
+notes: >
+  <anything an engineer would tell a new teammate about this table>
